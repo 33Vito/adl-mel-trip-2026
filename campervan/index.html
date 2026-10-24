@@ -143,9 +143,31 @@ footer{padding-bottom:max(50px,calc(30px + env(safe-area-inset-bottom)))}
  footer{font-size:14px}
  h2{font-size:20px}
 }
+
+.vph{position:relative;margin:-18px -18px 14px;aspect-ratio:16/9;background:var(--panel2);overflow:hidden;cursor:zoom-in}
+.vph img{width:100%;height:100%;object-fit:cover;display:block}
+.vph .zoom{position:absolute;right:10px;bottom:10px;background:#0b0f17cc;color:var(--txt);font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
+.vc .rank{z-index:3;background:#0b0f17cc}.vc:before{z-index:3}
+.credit{font-size:12px;color:var(--mut);margin:-8px 0 10px}.credit a{color:var(--mut)}
+.fp{margin:14px 0 6px;padding-top:12px;border-top:1px solid var(--line)}
+.fp h4{margin:0 0 8px;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fp .tabs{display:flex;gap:6px}.fp .tabs .btn{padding:4px 12px;font-size:12.5px}
+.fpimg{display:block;width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;cursor:zoom-in;-webkit-tap-highlight-color:transparent}
+.fpimg img{width:100%;height:auto;display:block;border-radius:8px}
+.fpnone{background:var(--panel2);border:1px dashed var(--line);border-radius:12px;padding:12px;color:var(--mut);font-size:13px}
+#lb{position:fixed;inset:0;z-index:5000;background:#05080deb;display:none;align-items:center;justify-content:center;flex-direction:column;padding:calc(env(safe-area-inset-top) + 56px) calc(env(safe-area-inset-right) + 10px) calc(env(safe-area-inset-bottom) + 14px) calc(env(safe-area-inset-left) + 10px);touch-action:pinch-zoom}
+#lb.on{display:flex}
+#lb .wrap{flex:1;width:100%;overflow:auto;display:flex;align-items:center;justify-content:center;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}
+#lb img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;touch-action:pan-x pan-y pinch-zoom}
+#lb img.plan{background:#fff;padding:6px}
+#lb .cap{color:var(--mut);font-size:13px;margin-top:10px;text-align:center}
+#lbx{position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:calc(env(safe-area-inset-right) + 10px);width:44px;height:44px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:22px;line-height:1;cursor:pointer}
+body.lbopen{overflow:hidden}
+@media(max-width:700px){.fp h4{flex-direction:column;align-items:stretch}.fp .tabs{flex-wrap:nowrap;margin:0}.fp .tabs .btn{flex:1 1 50%;justify-content:center;min-height:44px;font-size:15px;padding:8px 14px}.credit{font-size:13px}.fp h4{font-size:15px}.fpnone{font-size:15px}.vph .zoom{font-size:13px}}
 </style>
 </head>
 <body>
+<div id="lb" role="dialog" aria-modal="true" aria-label="图片查看"><button id="lbx" aria-label="关闭">✕</button><div class="wrap"><img id="lbimg" alt=""></div><div class="cap" id="lbcap"></div></div>
 <div class="wrap">
 <header>
   <span class="badge">🎄 2026 圣诞季 · 🚐 房车（campervan / motorhome） · 👨‍👩‍👧 4 大 1 小 · 3 天</span>
@@ -331,7 +353,29 @@ new Chart(document.getElementById('kmChart'),{type:'bar',data:{labels:['第 1 �
  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:MOB?'bottom':'top',labels:{color:'#cbd5e1',font:{size:13},boxWidth:14,padding:12}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw} km`}}},scales:{x:{ticks:{color:'#8a97ad',font:{size:13}},grid:{color:'#1e2940'}},y:{ticks:{color:'#8a97ad',font:{size:12},callback:v=>v+' km'},grid:{color:'#1e2940'}}}}});
 
 /* VEHICLES */
-document.getElementById('vcards').innerHTML=VEH.map(v=>`<div class="vc" style="--c:${v.color}"><span class="rank">${v.rank}</span><div class="co">${v.co}</div><h3>${v.model}</h3>
+
+const DIM={'img/britz-frontier-day.webp':[1400,517],'img/britz-frontier-night.webp':[1400,517],'img/apollo-euro-deluxe-day.webp':[1300,760],'img/apollo-euro-deluxe-night.webp':[1300,760],'img/maui-river-day.webp':[1400,487],'img/maui-river-night.webp':[1400,581]};
+const MEDIA={
+ britz:{img:'img/britz-frontier.webp',alt:'Britz Frontier 外观',cred:['Britz 官网','https://www.britz.com/au/en/frontier-popup'],
+  plans:{day:'img/britz-frontier-day.webp',night:'img/britz-frontier-night.webp'},pnote:'官方 Frontier 页面上的平面图文件名为 NZ 25/26 版，澳洲车布局可能略有差异'},
+ apollo:{img:'img/apollo-euro-deluxe.webp',alt:'Apollo Euro Deluxe 外观',cred:['Apollo 官网','https://www.apollocamper.com/campervan-hire-australia/euro-deluxe'],
+  plans:{day:'img/apollo-euro-deluxe-day.webp',night:'img/apollo-euro-deluxe-night.webp'},pnote:'官方 AU 26/27 平面图'},
+ maui:{img:'img/maui-river.webp',alt:'Maui River 外观（Yarra Valley, VIC）',cred:['Maui 官网','https://www.maui-rentals.com/motorhome-hire-australia/6-berth-motorhome-river'],
+  plans:{day:'img/maui-river-day.webp',night:'img/maui-river-night.webp'},pnote:'官方说明：同一车型类别的平面图可能有差异'},
+ star:{img:'img/star-polaris6.webp',alt:'Star RV Polaris 6 外观',cred:['Star RV 官网','https://www.starrv.com/au/motorhome-hire-au/6-berth-polaris'],
+  plans:null,pnote:'官方页面说明车辆布局会有差异；可看官方 360° 实景：<a href="https://my.matterport.com/show/?m=LgFuzpx9fwp" target="_blank" rel="noopener">日间</a> · <a href="https://my.matterport.com/show/?m=CiTQu9VSYfG" target="_blank" rel="noopener">夜间</a>'}
+};
+function vMedia(v){const m=MEDIA[v.id];if(!m)return '';
+ const ph=`<div class="vph" data-lb="${m.img}" data-cap="${m.alt} · 图片来源：${m.cred[0]}"><img src="${m.img}" alt="${m.alt}" loading="lazy" decoding="async" width="1200" height="675"><span class="zoom">🔍 点击放大</span></div>
+ <div class="credit">图片来源：<a href="${m.cred[1]}" target="_blank" rel="noopener">${m.cred[0]}</a></div>`;
+ return ph;}
+function vPlan(v){const m=MEDIA[v.id];if(!m)return '';
+ if(!m.plans) return `<div class="fp"><h4>平面图 Floorplan</h4><div class="fpnone">官方暂未提供平面图。${m.pnote}</div></div>`;
+ const both=m.plans.day&&m.plans.night;const first=m.plans.day||m.plans.night;
+ return `<div class="fp" data-v="${v.id}"><h4>平面图 Floorplan${both?`<span class="tabs"><button class="btn on" data-p="day">日间</button><button class="btn" data-p="night">夜间</button></span>`:''}</h4>
+ <button class="fpimg" data-lb="${first}" data-cap="${v.model} 平面图（${m.plans.day?'日间':'夜间'}） · 图片来源：${m.cred[0]}" aria-label="放大平面图"><img class="plan" src="${first}" alt="${v.model} 平面图" loading="lazy" decoding="async" width="${DIM[first][0]}" height="${DIM[first][1]}"></button>
+ <div class="credit" style="margin:6px 0 0">图片来源：<a href="${m.cred[1]}" target="_blank" rel="noopener">${m.cred[0]}</a> · ${m.pnote}</div></div>`;}
+document.getElementById('vcards').innerHTML=VEH.map(v=>`<div class="vc" style="--c:${v.color}"><span class="rank">${v.rank}</span>${vMedia(v)}<div class="co">${v.co}</div><h3>${v.model}</h3>
  <div class="tot">A$${fmt(v.lo)} – ${fmt(v.hi)}</div><div class="note">7 天计费总价估算（含一程费、儿童座椅、免赔额降低）</div>
  <div class="row"><span>座位 / 床位</span><span>${v.seats} / ${v.berths}</span></div>
  <div class="row"><span>儿童座椅</span><span>${v.anch}</span></div>
@@ -342,8 +386,21 @@ document.getElementById('vcards').innerHTML=VEH.map(v=>`<div class="vc" style="-
  <div class="row"><span>一程费</span><span>A$${v.oneway}</span></div>
  <div class="row"><span>儿童座椅费</span><span>${v.seat?'A$'+v.seat:'已包含'}</span></div>
  <div class="row"><span>免赔额</span><span>${v.exName} → A$${v.exDay*7}</span></div>
- <div class="verdict">${v.note}</div>
+ <div class="verdict">${v.note}</div>${vPlan(v)}
  <div class="note" style="margin-top:8px">来源：${v.src.map(s=>`<a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a>`).join(' · ')} · <a href="${v.book}" target="_blank" rel="noopener">官网查实时价 ↗</a></div></div>`).join('');
+
+/* FLOORPLAN TABS + LIGHTBOX */
+document.querySelectorAll('.fp[data-v]').forEach(fp=>{const m=MEDIA[fp.dataset.v],v=VEH.find(x=>x.id===fp.dataset.v);
+ fp.querySelectorAll('.tabs .btn').forEach(b=>b.onclick=()=>{fp.querySelectorAll('.tabs .btn').forEach(x=>x.classList.toggle('on',x===b));
+  const src=m.plans[b.dataset.p],bt=fp.querySelector('.fpimg');const ii=bt.querySelector('img');ii.width=DIM[src][0];ii.height=DIM[src][1];ii.src=src;bt.dataset.lb=src;bt.dataset.cap=`${v.model} 平面图（${b.dataset.p==='day'?'日间':'夜间'}） · 图片来源：${m.cred[0]}`;});});
+(function(){const lb=document.getElementById('lb'),im=document.getElementById('lbimg'),cap=document.getElementById('lbcap');let last=null;
+ function open(el){last=el;im.src=el.dataset.lb;im.className=el.classList.contains('fpimg')?'plan':'';im.alt=el.dataset.cap||'';cap.textContent=el.dataset.cap||'';lb.classList.add('on');document.body.classList.add('lbopen');document.getElementById('lbx').focus();}
+ function close(){lb.classList.remove('on');document.body.classList.remove('lbopen');im.removeAttribute('src');if(last)last.focus&&last.focus({preventScroll:true});}
+ document.getElementById('vcards').addEventListener('click',e=>{const el=e.target.closest('[data-lb]');if(el){e.preventDefault();open(el);}});
+ document.getElementById('lbx').onclick=close;
+ lb.addEventListener('click',e=>{if(e.target===lb||e.target.classList.contains('wrap')||e.target===cap)close();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lb.classList.contains('on'))close();});
+})();
 const comp=[['日租 ×7','#64748b',v=>[7*v.rate[0],7*v.rate[1]]],['一程费','#f59e0b',v=>[v.oneway,v.oneway]],['儿童座椅','#ec4899',v=>[v.seat,v.seat]],['免赔额降低 ×7','#22c55e',v=>[7*v.exDay,7*v.exDay]]];
 const labels=VEH.flatMap(v=>MOB?[[v.model,'低'],[v.model,'高']]:[v.model+' · 低',v.model+' · 高']);
 new Chart(document.getElementById('priceChart'),{type:'bar',data:{labels,datasets:comp.map(c=>({label:c[0],backgroundColor:c[1],data:VEH.flatMap(v=>c[2](v)),borderRadius:3}))},
